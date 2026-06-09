@@ -24,15 +24,17 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "ВСТАВЬТЕ_ТОКЕН")
 ADMIN_ID  = int(os.environ.get("ADMIN_ID", "123456789"))
 
 WALLETS = {
-    "USDT TRC20":           "TQhXxTYBq3qLT4W8ZZi1vkekUJQATG5qo5",
-    "🇰🇿 Kaspi Bank (KZT)": "4400 4302 1928 1703",
-    "🇷🇺 СБП Россия":       "87773907576",
-    "🌍 Wise":               "baanadilbayev@gmail.com",
+    "USDT TRC20":              "TQhXxTYBq3qLT4W8ZZi1vkekUJQATG5qo5",
+    "🇰🇿 Kaspi Bank (KZT)":    "4400 4302 1928 1703",
+    "🇰🇿 Halyk Bank (KZT)":    "4003 0351 6456 8979",
+    "💳 Binance Card (Crypto)": "5288 5457 3406 7495",
+    "🇷🇺 СБП Россия":          "87773907576",
+    "🌍 Wise":                  "baanadilbayev@gmail.com",
 }
 
 COMMISSION = 0.005
 FIAT       = {"USD":1,"EUR":0.871,"RUB":73.7,"TRY":45.9,"KZT":502,"USDT":1}
-CURRENCIES = ["USD","EUR","RUB","TRY","KZT","BTC","ETH","USDT"]
+CURRENCIES = ["USD","EUR","RUB","TRY","KZT","GEL","BTC","ETH","USDT"]
 HISTORY_FILE = "orders.json"
 
 # ========================
@@ -200,20 +202,42 @@ def save_orders(orders):
 # КУРСЫ
 # ========================
 def get_prices():
+    prices = {"BTC":67000,"ETH":3500,"USDT":1}
     try:
-        r = requests.get(
-            "https://api.coingecko.com/api/v3/simple/price"
-            "?ids=bitcoin,ethereum,tether&vs_currencies=usd&include_24hr_change=true",
-            timeout=5
-        )
-        d = r.json()
-        return {
-            "BTC":  d["bitcoin"]["usd"],
-            "ETH":  d["ethereum"]["usd"],
-            "USDT": d["tether"]["usd"],
-        }
+        # OKX API — реальные курсы
+        pairs = {"BTC":"BTC-USDT","ETH":"ETH-USDT","TON":"TON-USDT","SOL":"SOL-USDT"}
+        for key, pair in pairs.items():
+            r = requests.get(f"https://www.okx.com/api/v5/market/ticker?instId={pair}", timeout=5)
+            d = r.json()
+            prices[key] = float(d["data"][0]["last"])
+        # USDT/KZT, USDT/RUB, USDT/TRY через P2P OKX
+        for fiat in ["KZT","RUB","TRY"]:
+            try:
+                r3 = requests.get(
+                    f"https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency={fiat}&baseCurrency=USDT&side=sell&paymentMethod=all&userType=all&showTrade=false&showFollow=false&showCancelledOrder=false&firstCurrency=0",
+                    timeout=5, headers={"User-Agent":"Mozilla/5.0"}
+                )
+                d3 = r3.json()
+                if d3.get("data") and d3["data"].get("sell"):
+                    prices[f"USDT_{fiat}"] = float(d3["data"]["sell"][0]["price"])
+            except:
+                pass
     except:
-        return {"BTC":67000,"ETH":3500,"USDT":1}
+        pass
+    try:
+        # Курсы фиата через exchangerate API (бесплатно)
+        r2 = requests.get("https://open.er-api.com/v6/latest/USD", timeout=5)
+        d2 = r2.json()
+        if d2.get("result") == "success":
+            global FIAT
+            FIAT["RUB"] = d2["rates"]["RUB"]
+            FIAT["KZT"] = d2["rates"]["KZT"]
+            FIAT["TRY"] = d2["rates"]["TRY"]
+            FIAT["EUR"] = d2["rates"]["EUR"]
+            FIAT["GEL"] = d2["rates"]["GEL"]
+    except:
+        pass
+    return prices
 
 def get_usd_rate(cur, prices):
     cur = cur.upper()
@@ -290,10 +314,14 @@ def on_lang(call):
 def show_rates(msg):
     cid    = msg.chat.id
     prices = get_prices()
-    pairs  = [("BTC","USD"),("ETH","USD"),("USDT","USD"),("BTC","EUR"),
-              ("BTC","RUB"),("ETH","KZT"),("ETH","TRY"),("USDT","KZT")]
-    text   = t(cid,"rates_title")
-    for f,to in pairs:
+    pairs_show = [
+        ("BTC","USD"), ("ETH","USD"), ("USDT","USD"),
+        ("BTC","KZT"), ("ETH","KZT"), ("USDT","KZT"),
+        ("BTC","RUB"), ("USDT","RUB"), ("USDT","TRY"),
+        ("USDT","GEL"), ("BTC","TRY"), ("ETH","GEL"),
+    ]
+    text = t(cid,"rates_title")
+    for f,to in pairs_show:
         _,_,rate = calc_exchange(1,f,to,prices)
         text += f"`{f}/{to}` — *{rate:,.4f}*\n"
     text += t(cid,"rates_foot")
