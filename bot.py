@@ -17,19 +17,20 @@ from telebot.types import (
 )
 
 # ========================
-# НАСТРОЙКИ — ЗАПОЛНИТЕ!
+# НАСТРОЙКИ — читаются автоматически
 # ========================
-BOT_TOKEN = "ВСТАВЬТЕ_ТОКЕН"   # от @BotFather
-ADMIN_ID  = 123456789           # ваш Telegram ID
+import os
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "ВСТАВЬТЕ_ТОКЕН")
+ADMIN_ID  = int(os.environ.get("ADMIN_ID", "123456789"))
 
 WALLETS = {
-    "USDT TRC20": "TQhXxTYBq3qLT4W8ZZi1vkekUJQATG5qo5",
-    "TON":        "UQDPzNkqm3jfPSW7D3-bZttsGXAEG7HxeV_pobrpB6w3lQ_e",
-    "BTC":        "2KMVFtNZS8GC5KyME9vFNFhGQufM9TJNKcqFrLRpo3HL",
-    "ETH ERC20":  "0x0c63f565ef25e0e05179a41994d2e5db82c6bcf6",
+    "USDT TRC20":           "TQhXxTYBq3qLT4W8ZZi1vkekUJQATG5qo5",
+    "🇰🇿 Kaspi Bank (KZT)": "4400 4302 1928 1703",
+    "🇷🇺 СБП Россия":       "87773907576",
+    "🌍 Wise":               "baanadilbayev@gmail.com",
 }
 
-COMMISSION = 0.003
+COMMISSION = 0.005
 FIAT       = {"USD":1,"EUR":0.871,"RUB":73.7,"TRY":45.9,"KZT":502,"USDT":1}
 CURRENCIES = ["USD","EUR","RUB","TRY","KZT","BTC","ETH","USDT"]
 HISTORY_FILE = "orders.json"
