@@ -19,8 +19,8 @@ from telebot.types import (
 # ========================
 # НАСТРОЙКИ — ЗАПОЛНИТЕ!
 # ========================
-BOT_TOKEN = "8933257857:AAE3PtC9c4ltSwoB_8hRytm9-_aX7CUB0NI"   # от @BotFather
-ADMIN_ID  = 976860643           # ваш Telegram ID
+BOT_TOKEN = "ВСТАВЬТЕ_ТОКЕН"   # от @BotFather
+ADMIN_ID  = 123456789           # ваш Telegram ID
 
 WALLETS = {
     "USDT TRC20": "TQhXxTYBq3qLT4W8ZZi1vkekUJQATG5qo5",
